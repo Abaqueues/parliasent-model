@@ -1,3 +1,5 @@
+import sklearn
+
 categories = ['alt.atheism', 'soc.religion.christian', 'comp.graphics', 'sci.med']
 
 from sklearn.datasets import fetch_20newsgroups
