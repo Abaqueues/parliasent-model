@@ -2,3 +2,6 @@ venv/
 data/
 models/
 results/
+models/lr_model.joblib
+models/nb_model.joblib
+models/sgd_model.joblib
