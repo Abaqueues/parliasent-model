@@ -7,12 +7,20 @@ from nltk.corpus import sentiwordnet
 from nltk.tokenize import word_tokenize 
 import re
 import os
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 
 
-_JSON_INPUT_FOLDER = "E:\\Documents\\Education\\PG University of Birmingham\\MSc Computer Science\\Summer Semester\\MSc Projects\\Project Files\\Dataset\\final\\json"
-_JSON_TEST_FILE = "E:\\Documents\\Education\\PG University of Birmingham\\MSc Computer Science\\Summer Semester\\MSc Projects\\Project Files\\Dataset\\final\\json\\2013-01-08.json"
-_PREPROCESSED_DATA_OUTPUT = "E:\\Documents\\Education\\PG University of Birmingham\\MSc Computer Science\\Summer Semester\\MSc Projects\\Project Files\\Dataset\\final\\preprocessed_data.csv"
+# Set folder path for JSON input and preprocessed_data.csv output
+_JSON_INPUT_FOLDER = ".\\TWFYPreprocessor\\json\\"
+_PREPROCESSED_DATA_OUTPUT = ".\\SAModel\\data\\preprocessed_data.csv"
+_RESULTS_FOLDER = ".\\SAModel\\results\\"
+
+# Check whether the input and output folders exist
+os.makedirs(_JSON_INPUT_FOLDER, exist_ok=True)
+os.makedirs(".\\SAModel\\data\\", exist_ok=True)
+os.makedirs(_RESULTS_FOLDER, exist_ok=True)
 
 ### Preprocessing
 
@@ -164,19 +172,31 @@ def calculate_sentiment():
         pos = neg = 0    
     data["sentiment_score"] = sentiment_score
 
-    overall = []
+    overall_sentiment = []
+    overall_label = []
+    
     for i in range(len(data)):
         if data["sentiment_score"][i] >= 0.05:
-            overall.append("Positive")
+            overall_sentiment.append("Positive")
+            overall_label.append(1)
         elif data["sentiment_score"][i] <= -0.05:
-            overall.append("Negative")
+            overall_sentiment.append("Negative")
+            overall_label.append(0)
         else:
-            overall.append("Neutral")
-    data["overall_sentiment"] = overall
+            overall_sentiment.append("Neutral")
+            overall_label.append(1)
+    data["overall_sentiment"] = overall_sentiment
+    data["overall_label"] = overall_label
 
 # Functions to append POS tags and calculate sentiment scores
 pos_tagging()
 calculate_sentiment()
 
+# Confusion Matrix for MP votes against overall sentiment
+cm = confusion_matrix(data["vote"], data["overall_label"])
+ConfusionMatrixDisplay(cm).plot()
+plt.savefig(_RESULTS_FOLDER + "votes_against_overall_sentiment_cm")
+
+# Write Dataframe to CSV file
 data["speech_text_new"] = data["post_lemmatization"].copy()
 data.to_csv(_PREPROCESSED_DATA_OUTPUT, encoding = "utf-8")

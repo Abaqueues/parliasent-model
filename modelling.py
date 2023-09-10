@@ -1,13 +1,22 @@
 import pandas as pd
 import nltk
 from nltk.tokenize import word_tokenize 
+import os
 from joblib import dump, load
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 
 
-_JSON_INPUT_FOLDER = "E:\\Documents\\Education\\PG University of Birmingham\\MSc Computer Science\\Summer Semester\\MSc Projects\\Project Files\\Dataset\\final\\json"
-_JSON_TEST_FILE = "E:\\Documents\\Education\\PG University of Birmingham\\MSc Computer Science\\Summer Semester\\MSc Projects\\Project Files\\Dataset\\final\\json\\2013-01-08.json"
-_PREPROCESSED_DATA_INPUT = "E:\\Documents\\Education\\PG University of Birmingham\\MSc Computer Science\\Summer Semester\\MSc Projects\\Project Files\\Dataset\\final\\preprocessed_data.csv"
+# Set folder path for preprocessed_data.csv input
+_PREPROCESSED_DATA_INPUT = ".\\SAModel\\data\\preprocessed_data.csv"
+_RESULTS_FOLDER = ".\\SAModel\\results\\"
+_MODELS_FOLDER = ".\\SAModel\\models\\"
+
+# Check whether the input and output folders exist
+os.makedirs(".\\SAModel\\data\\", exist_ok=True)
+os.makedirs(_RESULTS_FOLDER, exist_ok=True)
+os.makedirs(_MODELS_FOLDER, exist_ok=True)
 
 ### Modelling
 
@@ -31,7 +40,7 @@ print(data)
 # X_train_bow, X_test_bow, y_train_bow, y_test_bow = train_test_split(bow_data, data["overall_sentiment"], test_size = 0.2, random_state = 0)
 
 # Apply TF-IDF model to data
-print("Applying TF-IDF model...")
+print("\nApplying TF-IDF model...")
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 noise_words = []
@@ -41,7 +50,7 @@ tfidf_data = tfidf_counts.fit_transform(data["speech_text_new"].values.astype(st
 X_train_tfidf, X_test_tfidf, y_train_tfidf, y_test_tfidf = train_test_split(tfidf_data, data["overall_sentiment"], test_size = 0.8, random_state = 0)
 
 # Train baseline MultinomialNB model
-print("Training MultinomialNB model...")
+print("\nTraining MultinomialNB model...")
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 nb_model_tf_idf = MultinomialNB()
@@ -50,15 +59,18 @@ nb_model_tf_idf.fit(X_train_tfidf, y_train_tfidf)
 test_pred_nb_all = nb_model_tf_idf.predict(X_test_tfidf)
 # MultinomialNB performance metrics
 print("\nMultinomialNB Results:")
-print("\nConfusion Matrix:")
+print("\n>Confusion Matrix:")
 print(confusion_matrix(y_test_tfidf, test_pred_nb_all))
-print("\nClassification Report:")
+print("\n>Classification Report:")
 print(classification_report(y_test_tfidf, test_pred_nb_all))
-print("\nAccuracy Score:")
+print("\n>Accuracy Score:")
 print(accuracy_score(y_test_tfidf, test_pred_nb_all))
+cm = confusion_matrix(y_test_tfidf, test_pred_nb_all)
+ConfusionMatrixDisplay(cm).plot()
+plt.savefig(_RESULTS_FOLDER + "nb_training_cm")
 
 # Train LogisticRegression model
-print("Training LogisticRegression model...")
+print("\nTraining LogisticRegression model...")
 from sklearn.linear_model import LogisticRegression
 lr_model_tf_idf = LogisticRegression(verbose = 1, max_iter = 1000)
 lr_model_tf_idf.fit(X_train_tfidf, y_train_tfidf)
@@ -66,12 +78,15 @@ lr_model_tf_idf.fit(X_train_tfidf, y_train_tfidf)
 test_pred_lr_all = lr_model_tf_idf.predict(X_test_tfidf)
 # LogisticRegression performance metrics
 print("\nLogisticRegression Results:")
-print("\nConfusion Matrix:")
+print("\n>Confusion Matrix:")
 print(confusion_matrix(y_test_tfidf, test_pred_lr_all))
-print("\nClassification Report:")
+print("\n>Classification Report:")
 print(classification_report(y_test_tfidf, test_pred_lr_all))
-print("\nAccuracy Score:")
+print("\n>Accuracy Score:")
 print(accuracy_score(y_test_tfidf, test_pred_lr_all))
+cm = confusion_matrix(y_test_tfidf, test_pred_lr_all)
+ConfusionMatrixDisplay(cm).plot()
+plt.savefig(_RESULTS_FOLDER + "lr_training_cm")
 
 # Train SGDClassifier model
 print("\nTraining SGDClassifier model...")
@@ -82,17 +97,20 @@ sgd_model_tf_idf.fit(X_train_tfidf, y_train_tfidf)
 test_pred_sgd_all = sgd_model_tf_idf.predict(X_test_tfidf)
 # SGDClassifier performance metrics
 print("\nSGDClassifier Results:")
-print("\nConfusion Matrix:")
+print("\n>Confusion Matrix:")
 print(confusion_matrix(y_test_tfidf, test_pred_sgd_all))
-print("\nClassification Report:")
+print("\n>Classification Report:")
 print(classification_report(y_test_tfidf, test_pred_sgd_all))
-print("\nAccuracy Score:")
+print("\n>Accuracy Score:")
 print(accuracy_score(y_test_tfidf, test_pred_sgd_all))
+cm = confusion_matrix(y_test_tfidf, test_pred_sgd_all)
+ConfusionMatrixDisplay(cm).plot()
+plt.savefig(_RESULTS_FOLDER + "sgd_training_cm")
 
 # Pickle the models
 print("\nPickling MultinomialNB model...")
-dump(nb_model_tf_idf, ".\\models\\nb_model.joblib")
+dump(nb_model_tf_idf, _MODELS_FOLDER + "nb_model.joblib")
 print("Pickling LogisticRegression model...")
-dump(lr_model_tf_idf, ".\\models\\lr_model.joblib")
+dump(lr_model_tf_idf, _MODELS_FOLDER + "lr_model.joblib")
 print("Pickling SGDClassifier model...")
-dump(sgd_model_tf_idf, ".\\models\\sgd_model.joblib")
+dump(sgd_model_tf_idf, _MODELS_FOLDER + "sgd_model.joblib")
