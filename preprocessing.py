@@ -1,5 +1,6 @@
 import pandas as pd
 import nltk
+import numpy as np
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords 
 from nltk.corpus import wordnet
@@ -9,6 +10,7 @@ import re
 import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from wordcloud import WordCloud
 
 
 
@@ -46,8 +48,10 @@ def preprocess_speech_data(data, column):
     print("\nPreprocessing data...")
     # Convert text to lowercase
     data[column] = data[column].astype(str).str.lower()
-    # Remove "{'p': ' ... '} from each sentence
+    # Remove "{'p': ' ... '}" from each sentence
     data[column] = data[column].apply(lambda x:re.sub(r'^.{5}|.{2}$', "", x))
+    # Remove "x__" from each sentence
+    data[column] = data[column].apply(lambda x:re.sub(r'\bx\w+\b', "", x))
     # Remove any links
     data[column] = data[column].apply(lambda x:re.sub(r"http\S+", "", x))
     # Remove all special characters
@@ -100,9 +104,18 @@ def join_paragraph(data, column):
     # Remove any double spaces
     data[column] = data[column].apply(lambda x:re.sub(r'\s+', " ", x, flags = re.I))
     
+def generate_wordcloud(data, filename):
+    text = " ".join(data.tolist())
+    wordcloud = WordCloud(width = 800, height = 400, background_color = "white", repeat = False, colormap = "tab20c").generate(text)
+    plt.figure(figsize = (12, 10))
+    plt.imshow(wordcloud)
+    plt.axis("off")
+    plt.savefig(_RESULTS_FOLDER + filename)
+
 # Function calls to preprocess the data
 data = populate_dataframe()
 preprocess_speech_data(data, "speech_without_stopwords")
+generate_wordcloud(data["speech_without_stopwords"], "wordcloud_before_preprocessing")
 remove_stopwords_tokenize(data, "speech_without_stopwords")
 join_paragraph(data, "speech_without_stopwords")
 
@@ -111,6 +124,7 @@ data["post_lemmatization"] = final_data
 
 lemmatize_data(data, "post_lemmatization")
 join_paragraph(data, "post_lemmatization")
+generate_wordcloud(data["post_lemmatization"], "wordcloud_after_preprocessing")
 
 # Append POS (part of speech) tag to individual words
 def pos_tagging():
@@ -158,7 +172,8 @@ def get_sentiment(word, tag):
 # Calculate sentiment score
 def calculate_sentiment():
     print("Calculating sentiment scores...")
-    pos = neg = obj = count = 0    
+    pos = 0    
+    neg = 0
     sentiment_score = []
     for pos_value in data["pos_tags"]:
         sentiment_value = [get_sentiment(x,y) for (x,y) in pos_value]
@@ -169,7 +184,8 @@ def calculate_sentiment():
             except:
                 continue
         sentiment_score.append(pos - neg)
-        pos = neg = 0    
+        pos = 0
+        neg = 0   
     data["sentiment_score"] = sentiment_score
 
     overall_sentiment = []

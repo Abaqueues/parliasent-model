@@ -31,46 +31,84 @@ print(data)
 # vect_doc_term.get_feature_names_out()
 # simple_train_dtm = vect_doc_term.transform(data["speech_text_new"].values.astype(str))
 
-# Apply TF-IDF model to data
-print("Applying TF-IDF model...")
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
-noise_words = []
-tfidf_counts = TfidfVectorizer(tokenizer = word_tokenize, stop_words = noise_words, ngram_range=(1,2))
-tfidf_data = tfidf_counts.fit_transform(data["speech_text_new"].values.astype(str))
+# Apply BoW Model to data
+from sklearn.feature_extraction.text import CountVectorizer
+print("\nApplying BoW model...")
+bow_counts = CountVectorizer(tokenizer = word_tokenize, ngram_range=(1, 3))
+bow_data = bow_counts.fit_transform(data["speech_text_new"].values.astype(str))
+
+# # Apply TF-IDF model to data
+# print("Applying TF-IDF model...")
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# noise_words = []
+# tfidf_counts = TfidfVectorizer(tokenizer = word_tokenize, stop_words = noise_words, ngram_range=(1,1))
+# tfidf_data = tfidf_counts.fit_transform(data["speech_text_new"].values.astype(str))
 
 # Load pickled model
-nb_model_tf_idf = load(_MODELS_FOLDER + "nb_model.joblib")
-lr_model_tf_idf = load(_MODELS_FOLDER + "lr_model.joblib")
-sgd_model_tf_idf = load(_MODELS_FOLDER + "sgd_model.joblib")
+nb_model = load(_MODELS_FOLDER + "nb_model.joblib")
+lr_model = load(_MODELS_FOLDER + "lr_model.joblib")
+sgd_model = load(_MODELS_FOLDER + "sgd_model.joblib")
 
-# Predict and KFold Cross Validation with MultinomialNB model
+# # Predict and KFold Cross Validation with TF-IDF MultinomialNB model
+# print("\nPredicting with MultinomialNB model...")
+# pred_nb_all = nb_model.predict(tfidf_data)
+# data["nb_prediction"] = pred_nb_all
+# scores = cross_val_score(nb_model, tfidf_data, data["overall_sentiment"], cv=5, n_jobs = -1)
+# print("\nMultinomialNB Cross Validation Results:")
+# print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
+# cm = confusion_matrix(data["overall_sentiment"], data["nb_prediction"])
+# ConfusionMatrixDisplay(cm).plot()
+# plt.savefig(_RESULTS_FOLDER + "nb_prediction_cm")
+
+# # Predict and KFold Cross Validation with TF-IDF LogisticRegression model
+# print("\nPredicting with LogisticRegression model...")
+# pred_lr_all = lr_model.predict(tfidf_data)
+# data["lr_prediction"] = pred_lr_all
+# scores = cross_val_score(lr_model, tfidf_data, data["overall_sentiment"], cv=5, n_jobs = -1)
+# print("\nLinearRegression Cross Validation Results:")
+# print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
+# cm = confusion_matrix(data["overall_sentiment"], data["lr_prediction"])
+# ConfusionMatrixDisplay(cm).plot()
+# plt.savefig(_RESULTS_FOLDER + "lr_prediction_cm")
+
+# # Predict and KFold Cross Validation with TF-IDF SGDClassifier model
+# print("\nPredicting with SGDClassifier model...")
+# pred_sgd_all = sgd_model.predict(tfidf_data)
+# data["sgd_prediction"] = pred_sgd_all
+# scores = cross_val_score(sgd_model, tfidf_data, data["overall_sentiment"], cv=5, n_jobs = -1)
+# print("\nSGDClassifier Cross Validation Results:")
+# print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
+# cm = confusion_matrix(data["overall_sentiment"], data["sgd_prediction"])
+# ConfusionMatrixDisplay(cm).plot()
+# plt.savefig(_RESULTS_FOLDER + "sgd_prediction_cm")
+
+# Predict and KFold Cross Validation with BoW MultinomialNB model
 print("\nPredicting with MultinomialNB model...")
-pred_nb_all = nb_model_tf_idf.predict(tfidf_data)
+pred_nb_all = nb_model.predict(bow_data)
 data["nb_prediction"] = pred_nb_all
-scores = cross_val_score(nb_model_tf_idf, tfidf_data, data["overall_sentiment"], cv=5)
+scores = cross_val_score(nb_model, bow_data, data["overall_sentiment"], cv=5, n_jobs = -1)
 print("\nMultinomialNB Cross Validation Results:")
 print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
 cm = confusion_matrix(data["overall_sentiment"], data["nb_prediction"])
 ConfusionMatrixDisplay(cm).plot()
 plt.savefig(_RESULTS_FOLDER + "nb_prediction_cm")
 
-# Predict and KFold Cross Validation with LogisticRegression model
+# Predict and KFold Cross Validation with BoW LogisticRegression model
 print("\nPredicting with LogisticRegression model...")
-pred_lr_all = lr_model_tf_idf.predict(tfidf_data)
+pred_lr_all = lr_model.predict(bow_data)
 data["lr_prediction"] = pred_lr_all
-scores = cross_val_score(lr_model_tf_idf, tfidf_data, data["overall_sentiment"], cv=5)
+scores = cross_val_score(lr_model, bow_data, data["overall_sentiment"], cv=5, n_jobs = -1)
 print("\nLinearRegression Cross Validation Results:")
 print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
 cm = confusion_matrix(data["overall_sentiment"], data["lr_prediction"])
 ConfusionMatrixDisplay(cm).plot()
 plt.savefig(_RESULTS_FOLDER + "lr_prediction_cm")
 
-# Predict and KFold Cross Validation with SGDClassifier model
+# Predict and KFold Cross Validation with BoW SGDClassifier model
 print("\nPredicting with SGDClassifier model...")
-pred_sgd_all = sgd_model_tf_idf.predict(tfidf_data)
+pred_sgd_all = sgd_model.predict(bow_data)
 data["sgd_prediction"] = pred_sgd_all
-scores = cross_val_score(sgd_model_tf_idf, tfidf_data, data["overall_sentiment"], cv=5)
+scores = cross_val_score(sgd_model, bow_data, data["overall_sentiment"], cv=5, n_jobs = -1)
 print("\nSGDClassifier Cross Validation Results:")
 print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
 cm = confusion_matrix(data["overall_sentiment"], data["sgd_prediction"])
